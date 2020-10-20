@@ -1159,7 +1159,11 @@ def get_figures(elf_file):
         return figs
 
     def get_exe(name):
-        cmd = "aarch64-unknown-linux-gnu-" + name
+        cmd = ''
+        if 'TOOLCHAIN_TRIPLET' in os.environ:
+            cmd = os.environ['TOOLCHAIN_TRIPLET'] + name
+        else:
+            cmd = name
         if 'Windows' == platform.system():
             cmd = cmd + '.exe'
         assert shutil.which(cmd) is not None, \
