@@ -904,12 +904,20 @@ class SymbolsTreeByPath:
         max_depth = 0
         items = []
         depth_args = {}
+        i = 0
         for node, depth in self.tree_root.pre_order():
             if depth == 0:
                 continue
             depth = depth - 1
             depth_args[depth] = node.name()
             if node.is_symbol():
+                # Some time elf will have two same symbols
+                for c in items:
+                    tmp = c.copy()
+                    tmp.pop('size', None)
+                    depth_args.pop('size', None)
+                    if tmp == depth_args:
+                        depth_args[depth] = depth_args[depth] + "<" +str(i) + ">"
                 depth_args['size'] = node.data.size
                 items.append(depth_args.copy())
                 depth_args[depth] = None
