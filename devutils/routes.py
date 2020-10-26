@@ -2,6 +2,13 @@
 from flask import render_template
 from flask import current_app as app
 
+@app.route('/regutils/')
+def regutils():
+    """Landing page."""
+    return render_template(
+        'regutils.jinja2'
+    )
+
 
 @app.route('/')
 def home():

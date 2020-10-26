@@ -6,7 +6,6 @@ import dash_table
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
-from .data import create_dataframe
 from .layout import html_layout
 
 import os
@@ -57,9 +56,6 @@ def init_elf_analysts(server):
             'https://fonts.googleapis.com/css?family=Lato'
         ]
     )
-
-    # Load DataFrame
-    df = create_dataframe()
 
     # Custom HTML layout
     dash_app.index_string = html_layout
