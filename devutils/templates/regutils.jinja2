@@ -80,10 +80,10 @@
                             <input type="text" class="form-control search-slt typeahead" id="regname" placeholder="Register Name" autocomplete="off" spellcheck="false">
                         </div>
                         <div class="col-lg-3 col-md-3 col-sm-12 p-0">
-                            <input type="text" class="form-control search-slt" placeholder="Value">
+                            <input type="text" id="regvalue" class="form-control search-slt" placeholder="Value">
                         </div>
                         <div class="col-lg-3 col-md-3 col-sm-12 p-0">
-                            <button type="button" class="btn btn-danger wrn-btn">GO</button>
+                            <button type="button" class="btn btn-danger wrn-btn"  onclick="goto_regs_desc()">GO</button>
                         </div>
                     </div>
                 </div>
@@ -92,6 +92,23 @@
     </div>
 </section>
 
+<h1><a id="current_reg_name" target="_blank" href="/static/xml/SysReg_xml_v86A-2019-12/AArch64-regindex.xml">Register Name</a></h1>
+<div>
+  <table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">Field</th>
+      <th scope="col">Description</th>
+      <th scope="col">value</th>
+    </tr>
+  </thead>
+  <tbody id="regs-field-descs">
+  </tbody>
+</table>
+</div>
+
+
+<h1>Registers list</h1>
 <table class="table table-hover">
   <thead>
     <tr>
