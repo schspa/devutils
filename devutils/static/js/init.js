@@ -83,26 +83,25 @@ function goto_regs_desc() {
             $('#current_reg_name').attr('href', regfile);
             var filedescs = $('#regs-field-descs');
             filedescs.empty();
-            $(response)
-                .find('field')
+            $('register_page > registers > register > reg_fieldsets > reg_fieldset',response)
+                .find('fieldat') /* arm use this element to get reg filed maps */
                 .each(function(index, element){
                     // as example we query & store the field
-                    var rwtype = $(element).attr('rwtype');
-                    console.log(rwtype);
-                    if (rwtype !== undefined) {
-                        return;
-                    }
-                    var field = $(element).find('field_name').text();
-                    var lsb = parseInt($(element).find('field_lsb').text());
-                    var msb = parseInt($(element).find('field_msb').text());
-                    if (lsb >= 63 || msb >= 63) {
-                        return;
+                    var id = $(element).attr('id');
+                    var msb = parseInt($(element).attr('msb'))
+                    var lsb = parseInt($(element).attr('lsb'))
+
+                    var field = $('#'+id, response);
+                    rwtype=$(field).attr('rwtype');
+                    if (rwtype != undefined) {
+                        field = rwtype;
+                    } else {
+                        field = $(field).children('field_name').text();
                     }
                     var value = regval >> lsb;
                     value &= (1 << (msb - lsb + 1)) - 1;
-                    filedescs.append('<tr><th>'+ msb +':' + lsb + '</th><th>' + field + '</th> <th><a target="_blank" href="' + regfile + '#' + field + '_' + msb + '">' + value.toString(2) + '</a></th></tr>');
-                    // get the values we want
-                    console.log(field);
+                    // TODO: fix href link
+                    filedescs.append('<tr><th>'+ msb +':' + lsb + '</th><th>' + field + '</th> <th><a target="_blank" href="' + regfile + '#' + id + '">' + value.toString(2) + '</a></th></tr>');
                 });
         }});
 }
