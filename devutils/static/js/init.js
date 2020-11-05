@@ -63,6 +63,23 @@ function update_reg_list() {
     })
 }
 
+function get_val_string(val, width, base) {
+    var base_width;
+
+    /* TODO: use correct way to calculate string length. */
+    if (base == 2) {
+        base_width = width;
+    } else {
+        base_width = Math.ceil(width/4);
+    }
+
+    if (base == 10) {
+        return ("0".repeat(base_width) + (val|0).toString(base)).substr(-base_width);
+    }
+
+    return ("0".repeat(base_width) + ((val|0)+4294967296).toString(base)).substr(-base_width);
+}
+
 function goto_regs_desc() {
     var regtype = $('#regtype').val();
     var regname = $('#regname').val();
@@ -90,6 +107,7 @@ function goto_regs_desc() {
                     var id = $(element).attr('id');
                     var msb = parseInt($(element).attr('msb'))
                     var lsb = parseInt($(element).attr('lsb'))
+                    var width = msb - lsb + 1;
 
                     var field = $('#'+id, response);
                     rwtype=$(field).attr('rwtype');
@@ -99,9 +117,14 @@ function goto_regs_desc() {
                         field = $(field).children('field_name').text();
                     }
                     var value = regval >> lsb;
-                    value &= (1 << (msb - lsb + 1)) - 1;
+                    value &= (1 << width) - 1;
+                    console.log("get value", id, value, msb, lsb, width);
+                    var binvalue = get_val_string(value, width, 2);
+                    var hexvalue = get_val_string(value, width, 16);
+                    var decvalue = get_val_string(value, width, 10);
+
                     // TODO: fix href link
-                    filedescs.append('<tr><th>'+ msb +':' + lsb + '</th><th>' + field + '</th> <th><a target="_blank" href="' + regfile + '#' + id + '">' + value.toString(2) + '</a></th></tr>');
+                    filedescs.append('<tr><th>'+ msb +':' + lsb + '</th><th>' + field + '</th> <td><a class="binval" target="_blank" href="' + regfile + '#' + id + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td></tr>');
                 });
         }});
 }
