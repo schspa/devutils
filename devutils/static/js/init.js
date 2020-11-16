@@ -100,6 +100,9 @@ function goto_regs_desc() {
             $('#current_reg_name').attr('href', regfile);
             var filedescs = $('#regs-field-descs');
             filedescs.empty();
+            var fieldbody = $('#regfield_body');
+            fieldbody.empty();
+            regfields = new Array();
             $('register_page > registers > register > reg_fieldsets > reg_fieldset',response)
                 .find('fieldat') /* arm use this element to get reg filed maps */
                 .each(function(index, element){
@@ -116,6 +119,8 @@ function goto_regs_desc() {
                     } else {
                         field = $(field).children('field_name').text();
                     }
+                    regfields.push({'id': id, 'msb': msb, 'lsb': lsb, 'width': width, 'name': field});
+
                     var value = regval >> lsb;
                     value &= (1 << width) - 1;
                     console.log("get value", id, value, msb, lsb, width);
@@ -126,6 +131,20 @@ function goto_regs_desc() {
                     // TODO: fix href link
                     filedescs.append('<tr><th>'+ msb +':' + lsb + '</th><th>' + field + '</th> <td><a class="binval" target="_blank" href="' + regfile + '#' + id + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td></tr>');
                 });
+            regfields.sort(function(a, b){return b['msb'] - a['msb']});
+            result = '';
+            regfields.forEach(function(reg) {
+                if ((reg['msb'] + 1) % 32 == 0) {
+                    result += '<tr class="firstrow">';
+                }
+
+                result += '<td class = "lr" colspan="'+ reg['width'] + '">' + '<a class="binval" target="_blank" href="' + regfile + '#' + reg['id'] + '">' + reg['name'] + '</a>' + '</td>';
+
+                if (reg['lsb'] % 32 == 0) {
+                    result += '</tr>';
+                }
+            });
+            fieldbody.append(result);
         }});
 }
 
