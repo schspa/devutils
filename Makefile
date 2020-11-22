@@ -27,6 +27,15 @@ xmls = 2020-09/SysReg_xml_v87A-2020-09.tar.gz
 
 .PHONY: update-xmls
 update-xmls: $(addprefix .asserts/,$(xmls))
+	mkdir -p ./devutils/static/arm-asl
+	find .asserts -name '*.tar.gz' -exec tar -xzvf {} -C ./devutils/static/arm-asl \;
+
+./devutils/static/arm-asl/asl.xml: update-xmls
+	echo "generate asl summary xml"
+	python3 devutils/script/create-asl-summary.py
+
+.PHONY: asl
+asl: ./devutils/static/arm-asl/asl.xml
 
 all help:
 	@echo "$$HELP"
