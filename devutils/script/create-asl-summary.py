@@ -59,7 +59,7 @@ for regtype in regtypes:
     for reg in reg_indexs:
         regs.append({'name': os.path.dirname(os.path.relpath(reg, asl_path)),
                      'path': '/' + os.path.relpath(reg, root_path),
-                     'basepath': '/' + os.path.relpath(os.path.dirname(reg), root_path)})
+                     'basepath': '/' + os.path.relpath(os.path.dirname(reg), root_path).replace("/static/arm-asl", "/aslshow")})
         pass
     allregs.append({'type': regtype['type'],
                     'regs': regs})

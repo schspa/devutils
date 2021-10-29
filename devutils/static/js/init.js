@@ -288,7 +288,7 @@ function goto_regs_desc() {
         },
         success: function(response) {
             $('#current_reg_name').text(regname);
-            $('#current_reg_name').attr('href', regfile);
+            $('#current_reg_name').attr('href', regfile.replace('/static/arm-asl', '/aslshow'));
             var filedescs = $('#regs-field-descs');
             filedescs.empty();
             var fieldbody = $('#regfield_body');
