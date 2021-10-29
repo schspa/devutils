@@ -114,6 +114,14 @@ function get_val_string(val, width, base) {
 
     return ("0".repeat(base_width) + ((val|0)+4294967296).toString(base)).substr(-base_width);
 }
+
+function isEmpty(strValue)
+{
+    // Test whether strValue is empty
+    if (!strValue || strValue.trim() === "" || (strValue.trim()).length === 0) {
+        //do something
+    }
+}
 /**
  *
  * registers > register > reg_fieldsets
@@ -123,126 +131,89 @@ function get_val_string(val, width, base) {
  *      reg_fieldset
  *
  */
-function parse_fieldsets(reg, regval) {
-    $('> reg_fieldset', reg).children('fieldat').each(function (index, element) {
-        var id = $(element).attr('id');
-        var msb = parseInt($(element).attr('msb'))
-        var lsb = parseInt($(element).attr('lsb'))
+function parse_fieldsets(reg, regval, anchor = "") {
+    var current_lsb = 63;
+    field_value_links = new Object();
+    $( "> fields > field", reg).each(function () {
+        field_name = $('> field_name', $(this));
+
+        /**
+         * @TODO: take 'fields_condition' into consideration
+         */
+        var msb = parseInt($('> field_msb', $(this)).text())
+        var lsb = parseInt($('> field_lsb', $(this)).text())
+        if (current_lsb < msb) {
+            /* this field have another description taked */
+            return;
+        }
+        current_lsb = lsb;
         var width = msb - lsb + 1;
 
         var value = regval >> lsb;
         value &= (1 << width) - 1;
+        value = '0b' + get_val_string(value, width, 2);
 
-        var field = $('> fields > field#'+id, reg);
-        var has_partial_fieldset = $(field).attr('has_partial_fieldset') === 'True';
+        /**
+         * This field value define the struct to another field.
+         * i.e. ESR_ELx.EC
+         * <field_value_links_to linked_field_condition="an exception from a Data Abort" linked_field_name="ISS"/>
+         */
+        if ($(this).attr('is_linked_to_partial_fieldset') === 'True') {
+            $("> field_values > field_value_instance", $(this)).each(function () {
+                const field_value_links_to = $('> field_value_links_to', $(this))[0];
+                if ($('> field_value', $(this)).text() === value) {
+                    console.log(
+                        value,
+                        $(field_value_links_to).attr('linked_field_name'),
+                        $(field_value_links_to).attr('linked_field_condition'));
+                    field_value_links[$(field_value_links_to).attr('linked_field_name')] = $(field_value_links_to).attr('linked_field_condition');
+                }
+            });
+        }
 
-        console.log("get value", id, value, msb, lsb, width, has_partial_fieldset);
-        rwtype=$(field).attr('rwtype');
-        var fieldname = undefined;
-        if (rwtype != undefined) {
-            fieldname = rwtype;
+        /**
+         * This field contains sub field.
+         * i.e. ESR_ELx.ISS
+         *
+         <partial_fieldset>
+         <fields length="25">
+         <fields_condition/>
+         <fields_instance>an exception from a Data Abort</fields_instance>
+         */
+        if ($(this).attr('has_partial_fieldset') === 'True') {
+            $("> partial_fieldset", $(this)).each(function () {
+                fields_instance = $('> fields > fields_instance', $(this)).text();
+                if (fields_instance === field_value_links[field_name.text()]) {
+                    console.log("Dump partial fileset");
+                    parse_fieldsets($(this), regval, fields_instance.replaceAll(" ", ""));
+                }
+            });
         } else {
-            fieldname = $('field_name:first', field).text();
-        }
-        regfields.push({
-            'id': id,
-            'name': fieldname,
-            'value': value,
-            'msb': msb,
-            'lsb': lsb,
-            'width': width,
-            'field': field,
-            'is_partial' : has_partial_fieldset
-        });
-    });
-}
-
-function get_partial_fildsets(reg, regval, cond) {
-    var partial_fieldset = undefined;
-
-    reg.find('partial_fieldset').each(function(index, element) {
-        instance = $('fields > fields_instance', element).text();
-        if (instance === cond) {
-            partial_fieldset = element;
+            var id = $(this).attr('id');
+            // console.log('get field: ', field_name.text(), ' value: ' + value);
+            console.log("get value", field_name.text(), id, value, msb, lsb, width);
+            regfields.push({
+                'id': id,
+                'name': id,
+                'value': value,
+                'msb': msb,
+                'lsb': lsb,
+                'width': width,
+                'field': $(this),
+                'is_partial' : false,
+                'anchor' : anchor + id,
+            });
         }
     });
-    if (partial_fieldset == undefined) {
-        console.log("Can't find Matching fields_instance");
-        return;
-    }
-
-    parse_fieldsets(partial_fieldset, regval);
-    console.log(partial_fieldset);
-    return '';
 }
 
 function get_reg_filed(reg, regfile, regval) {
     regfields = new Array();
     fieldesc = '';
-    var field_value_links = new Array();
-    var partial_fieldsets = new Array();
-
     parse_fieldsets($('reg_fieldsets', reg), regval);
-
-    regfields.forEach(function(regfield) {
-        var field = regfield['field'];
-        var fieldname = regfield['name'];
-        var value = regfield['value'];
-        var width = regfield['width'];
-        var binvalue = get_val_string(value, width, 2);
-        var hexvalue = get_val_string(value, width, 16);
-        var decvalue = get_val_string(value, width, 10);
-
-        if (regfield['is_partial']) {
-            partial_fieldsets.push({'name' : fieldname, 'value' : value});
-        }
-        $(field).find('field_value_instance').each(function(idx, element) {
-            links = $('field_value_links_to', $(element));
-
-            var field_value = $('field_value', $(element)).text();
-            if (field_value == undefined || field_value !== ('0b' + binvalue)) {
-                return;
-            }
-            if (links == undefined || $(links).attr('linked_field_condition') == undefined) {
-                return;
-            }
-
-            field_value_links.push(
-                {
-                    'linked_field_condition' : $(links).attr('linked_field_condition'),
-                    'linked_field_name' : $(links).attr('linked_field_name'),
-                    'value' : $('field_value', $(element)).text(),
-                });
-        });
-    });
-    console.log(partial_fieldsets);
-    console.log(field_value_links);
-    partial_fieldsets.forEach(function (ele, index) {
-        regfield = regfields.find(function (regfield) {
-            return regfield['name'] === ele['name'];
-        });
-        if (regfield == undefined) {
-            return;
-        }
-
-        cond = field_value_links.find(function (ele) {
-            return ele['linked_field_name'] == regfield['name'];
-        });
-        if (cond == undefined) {
-            return;
-        }
-
-        get_partial_fildsets(
-            $('reg_fieldsets > fields > field#'+regfield['id'], reg),
-            ele['value'],
-            cond['linked_field_condition']);
-    });
 
     console.log('regfields: ', regfields);
 
-    regfields = regfields.filter(function(ele) {
-        return (ele['is_partial'] == undefined || !ele['is_partial'])
-    });
     regfields.sort(function(a, b){return b['msb'] - a['msb']});
     fieldbody = '';
     regfields.forEach(function(reg) {
@@ -256,13 +227,17 @@ function get_reg_filed(reg, regfile, regval) {
             fieldbody += '<tr class="firstrow">';
         }
 
-        fieldbody += '<td class = "lr" colspan="'+ reg['width'] + '">' + '<a class="binval" target="_blank" href="' + regfile + '#' + reg['id'] + '">' + reg['name'] + '</a>' + '</td>';
+        fieldbody += '<td class = "lr" colspan="'+ reg['width'] + '">' + '<a class="binval" target="_blank" href="' + regfile + '#' + reg['anchor'] + '">' + reg['name'] + '</a>' + '</td>';
 
         if (reg['lsb'] % 32 == 0) {
             fieldbody += '</tr>';
         }
 
-        fieldesc += '<tr><th>'+ reg['msb'] +':' + reg['lsb'] + '</th><th>' + reg['name'] + '</th> <td><a class="binval" target="_blank" href="' + regfile + '#' + reg['id'] + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td></tr>';
+        // use fields_instance as anchor. <fields_instance>an exception from a Data Abort</fields_instance>
+        // dtd: <!ATTLIST field_value_links_to linked_field_condition CDATA #REQUIRED> <!-- The condition/description that distinguishes the layout of the other field. (Examples for ESR_ELx.EC are 'Exceptions with an unknown reason'.) -->
+        // <field_value_links_to linked_field_condition="exceptions with an unknown reason" linked_field_name="ISS"/>
+        //
+        fieldesc += '<tr><th>'+ reg['msb'] +':' + reg['lsb'] + '</th><th>' + reg['name'] + '</th> <td><a class="binval" target="_blank" href="' + regfile + '#' + reg['anchor'] + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td></tr>';
     });
 
     return {
