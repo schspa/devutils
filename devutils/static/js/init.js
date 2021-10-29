@@ -1,7 +1,7 @@
 var register_map = new Object();
 var regtypes = new Array(0);
 
-function parse_reg_xml(reg) {
+function parse_reg_xml(reg, callback) {
     $.ajax({
         url: reg['path'],
         type: "GET",
@@ -42,11 +42,12 @@ function parse_reg_xml(reg) {
                     name: 'regnames',
                     source: regnames
                 });
+            callback();
         }
     })
 }
 
-function init_reg_list() {
+function init_reg_list(callback) {
     var regtype = $('#regtype').val();
     var url;
     $.ajax({
@@ -77,7 +78,7 @@ function init_reg_list() {
                         'regs' : regs,
                     });
                 })
-            parse_reg_xml(regtypes[0]['regs'][0])
+            parse_reg_xml(regtypes[0]['regs'][0], callback)
         }
     })
 }
@@ -293,12 +294,26 @@ function goto_regs_desc() {
             filedescs.empty();
             var fieldbody = $('#regfield_body');
             fieldbody.empty();
-            result = get_reg_filed($('register_page > registers > register:first',response), regfile, regval);
+            result = get_reg_filed(
+                $('register_page > registers > register:first',response),
+                regfile.replace('/static/arm-asl', '/aslshow'), regval);
             fieldbody.append(result['fieldbody']);
             filedescs.append(result['fieldesc']);
         }});
 }
 
 $(document).ready(function () {
-    init_reg_list();
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const reg = urlParams.get('reg');
+    const value = urlParams.get('value');
+
+    if ($("#regname").val()=="") {
+        $("#regname").val(reg == null ? 'ESR_EL3' : reg);
+    }
+    if ($("#regvalue").val()=="") {
+        $("#regvalue").val(value == null ? '0x96000010' : value);
+    }
+
+    init_reg_list(goto_regs_desc);
 })
