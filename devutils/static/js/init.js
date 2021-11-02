@@ -189,6 +189,7 @@ function parse_fieldsets(reg, regval, anchor = "") {
         } else {
             var id = $(this).attr('id');
             // console.log('get field: ', field_name.text(), ' value: ' + value);
+            field_description = $('> field_description:first', $(this)).text().trim();
             console.log("get value", field_name.text(), id, value, msb, lsb, width);
             regfields.push({
                 'id': id,
@@ -200,6 +201,7 @@ function parse_fieldsets(reg, regval, anchor = "") {
                 'field': $(this),
                 'is_partial' : false,
                 'anchor' : anchor + id,
+                'field_description' : field_description,
             });
         }
     });
@@ -235,7 +237,12 @@ function get_reg_filed(reg, regfile, regval) {
         // dtd: <!ATTLIST field_value_links_to linked_field_condition CDATA #REQUIRED> <!-- The condition/description that distinguishes the layout of the other field. (Examples for ESR_ELx.EC are 'Exceptions with an unknown reason'.) -->
         // <field_value_links_to linked_field_condition="exceptions with an unknown reason" linked_field_name="ISS"/>
         //
-        fieldesc += '<tr><th>'+ reg['msb'] +':' + reg['lsb'] + '</th><th>' + reg['name'] + '</th> <td><a class="binval" target="_blank" href="' + regfile + '#' + reg['anchor'] + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td></tr>';
+        fieldesc += '<tr>' +
+            '<th>' + reg['name'] + '<th>' +
+            reg['msb'] +':' + reg['lsb'] + '</th>' +
+            '<th>' + reg['field_description'] + '<th>' +
+            ' <td><a class="binval" target="_blank" href="' + regfile + '#' + reg['anchor'] + '">' + binvalue + '</a><div class="hexvalue">' + hexvalue + '</div><div class="decvalue">' + decvalue + '</div></td>' +
+            '</tr>';
     });
 
     return {
