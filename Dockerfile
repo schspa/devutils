@@ -19,6 +19,8 @@ EXPOSE 5000
 WORKDIR /app
 
 COPY requirements.txt .
+RUN pip3 install pip -U
+RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip3 install -r requirements.txt
 
 COPY . /app
