@@ -130,7 +130,7 @@ function isEmpty(strValue)
  *
  */
 function parse_fieldsets(reg, regval, anchor = "") {
-    var current_lsb = 63;
+    var current_lsb = 64;
     field_value_links = new Object();
     $( "> fields > field", reg).each(function () {
         field_name = $('> field_name', $(this));
@@ -140,7 +140,7 @@ function parse_fieldsets(reg, regval, anchor = "") {
          */
         var msb = parseInt($('> field_msb', $(this)).text())
         var lsb = parseInt($('> field_lsb', $(this)).text())
-        if (current_lsb < msb) {
+        if (current_lsb <= msb) {
             /* this field have another description taked */
             return;
         }
