@@ -99,20 +99,18 @@ function update_reg_list() {
 }
 
 function get_val_string(val, width, base) {
-    var base_width;
+    var val_string = val.toString(base);
 
-    /* TODO: use correct way to calculate string length. */
-    if (base == 2) {
-        base_width = width;
-    } else {
-        base_width = Math.ceil(width/4);
+    if (base == 16) {
+        width = width / 4;
+    } else if (base != 2) {
+        width = 0;
+    }
+    if (val_string.length < width) {
+        return "0".repeat(width - val_string.length) + val_string;
     }
 
-    if (base == 10) {
-        return ("0".repeat(base_width) + (val|0).toString(base)).substr(-base_width);
-    }
-
-    return ("0".repeat(base_width) + ((val|0)+4294967296).toString(base)).substr(-base_width);
+    return val_string;
 }
 
 function isEmpty(strValue)
@@ -149,9 +147,9 @@ function parse_fieldsets(reg, regval, anchor = "") {
         current_lsb = lsb;
         var width = msb - lsb + 1;
 
-        var value = regval >> lsb;
-        value &= (1 << width) - 1;
-        value = '0b' + get_val_string(value, width, 2);
+        var value = regval >> BigInt(lsb);
+        value &= (1n << BigInt(width)) - 1n;
+        value_str = '0b' + get_val_string(value, width, 2);
 
         /**
          * This field value define the struct to another field.
@@ -161,9 +159,9 @@ function parse_fieldsets(reg, regval, anchor = "") {
         if ($(this).attr('is_linked_to_partial_fieldset') === 'True') {
             $("> field_values > field_value_instance", $(this)).each(function () {
                 const field_value_links_to = $('> field_value_links_to', $(this))[0];
-                if ($('> field_value', $(this)).text() === value) {
+                if ($('> field_value', $(this)).text() === value_str) {
                     console.log(
-                        value,
+                        value_str,
                         $(field_value_links_to).attr('linked_field_name'),
                         $(field_value_links_to).attr('linked_field_condition'));
                     field_value_links[$(field_value_links_to).attr('linked_field_name')] = $(field_value_links_to).attr('linked_field_condition');
@@ -250,7 +248,7 @@ function goto_regs_desc() {
     var regtype = $('#regtype').val();
     var regname = $('#regname').val();
     /* TODO: switch to long.js or something else, to provide 64bit support */
-    var regval  = parseInt($('#regvalue').val());
+    var regval  = BigInt($('#regvalue').val());
     var regfile = register_map[regname];
     console.log(regfile)
     console.log("regtype:" + regtype + " regname:" + regname + " val:" + regval);
